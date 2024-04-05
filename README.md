@@ -23,7 +23,7 @@ pip install code-indexer-loop
 ## Usage:
 1. Import necessary modules:
 ```python
-from code_indexer_loop.api import CodeIndexer
+from src.api import CodeIndexer
 ```
 2. Create a CodeIndexer object and have it watch for changes:
 ```python

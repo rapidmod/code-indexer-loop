@@ -3,10 +3,11 @@ build-backend = "flit_core.buildapi"
 requires = ["flit_core >=3.8.0,<4"]
 
 [project]
-name = "code-indexer-loop"
+name = "src"
 description = "Code Indexer Loop"
 authors = [
-    {name = "Rick Lamers", email = "rick@definitive.io"}
+    {name = "Rick Lamers", email = "rick@definitive.io"},
+    {name = "James K", email = "james@rapidmod.io"}
 ]
 dynamic = ["version"]
 readme = "README.md"

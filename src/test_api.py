@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from code_indexer_loop.code_splitter import (CodeSplitter,
+from src.code_splitter import (CodeSplitter,
                                              MaxChunkLengthExceededError,
                                              TokenCounter)
 

@@ -81,3 +81,9 @@ Please see the LICENSE file provided with the source code.
 
 ## Attribution
 We'd like to thank the Sweep AI for publishing their ideas about code chunking. Read their blog posts about the topic [here](https://docs.sweep.dev/blogs/chunking-2m-files) and [here](https://docs.sweep.dev/blogs/chunking-improvements). The implementation in `code_indexer_loop` is modified from their original implementation mainly to limit based on tokens instead of characters and to achieve perfect document reconstruction (`"".join(chunks) == original_source_code`).
+
+## Dev Notes
+- on windows Microsoft Visual C++ 14.0 or greater is required before install
+- python version 3.9 is required
+- flit is used for packaging (pip install flit)
+- flit install --deps develop (to install dev dependencies and run the app)

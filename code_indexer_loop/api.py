@@ -4,16 +4,18 @@ from pathlib import Path
 
 import chromadb
 from langchain.embeddings.openai import OpenAIEmbeddings
-from llama_index import ServiceContext, VectorStoreIndex
-from llama_index.embeddings import LangchainEmbedding
+
+from llama_index.core import ServiceContext, VectorStoreIndex
+
+from llama_index.embeddings.langchain import LangchainEmbedding
 from llama_index.schema import NodeWithScore, TextNode
 from llama_index.vector_stores import ChromaVectorStore
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from src.code_splitter import CodeSplitter
-from src.constants import EXTENSION_TO_TREE_SITTER_LANGUAGE
-from src.utils import hash_md5
+from code_indexer_loop.code_splitter import CodeSplitter
+from code_indexer_loop.constants import EXTENSION_TO_TREE_SITTER_LANGUAGE
+from code_indexer_loop.utils import hash_md5
 
 
 class CodeIndexer:

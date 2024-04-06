@@ -195,7 +195,7 @@ class CodeSplitter:
                 aggregated_chunk = Span(chunk.start, chunk.end)
                 aggregated_chunk_token_len = chunk_token_len
             else:
-                # Combined chunk does not exceed target_chunk_tokens
+                # Combined chunk does not exceed target_chunk_tokens,
                 # so we add the current chunk to the aggregated_chunk.
                 # Note, there is no need to check whether the combined chunk
                 # exceeds max_chunk_tokens because we have already checked.

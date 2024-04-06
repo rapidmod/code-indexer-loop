@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 requires = ["flit_core"]
 
 [project]
-name = "src"
+name = "code-indexer-loop"
 description = "Code Indexer Loop"
 authors = [
     {name = "Rick Lamers", email = "rick@definitive.io"},

@@ -3,13 +3,12 @@ import os
 from pathlib import Path
 
 import chromadb
-from langchain.embeddings.openai import OpenAIEmbeddings
-
+from langchain_openai import OpenAIEmbeddings
 from llama_index.core import ServiceContext, VectorStoreIndex
 
 from llama_index.embeddings.langchain import LangchainEmbedding
-from llama_index.schema import NodeWithScore, TextNode
-from llama_index.vector_stores import ChromaVectorStore
+from llama_index.core.schema import NodeWithScore, TextNode
+from llama_index.vector_stores.chroma import ChromaVectorStore
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
@@ -29,14 +28,16 @@ class CodeIndexer:
     index: VectorStoreIndex = None
 
     def __init__(
-        self,
-        src_dir: str,
-        target_chunk_tokens: int = 300,
-        max_chunk_tokens: int = 1000,
-        enforce_max_chunk_tokens: bool = False,
-        coalesce: int = 50,
-        token_model: str = "gpt-4",
-        watch: bool = False,
+            self,
+            src_dir: str,
+            target_chunk_tokens: int = 300,
+            max_chunk_tokens: int = 1000,
+            enforce_max_chunk_tokens: bool = False,
+            coalesce: int = 50,
+            token_model: str = "gpt-4",
+            watch: bool = False,
+            refresh: bool = True,
+            db_path: str = ""  # Path to save the Chroma database, none if not persistent @rapidmod
     ):
         self.src_dir = src_dir
         self.target_chunk_tokens = target_chunk_tokens
@@ -44,16 +45,20 @@ class CodeIndexer:
         self.enforce_max_chunk_tokens = enforce_max_chunk_tokens
         self.coalesce = coalesce
         self.token_model = token_model
+        self.db_path = db_path
         self._create_index()
-        self.refresh_nodes()
+        if refresh:
+            self.refresh_nodes()
 
         if watch:
             self._start_watching()
+            # Ensure the watcher is stopped properly.
             atexit.register(self._stop_watching)
 
     def query(self, query: str, k=10) -> str:
         return "\n".join(
-            [node_with_score.node.text for node_with_score in self.index.as_retriever(similarity_top_k=k).retrieve(query)]
+            [node_with_score.node.text for node_with_score in
+             self.index.as_retriever(similarity_top_k=k).retrieve(query)]
         )
 
     def query_nodes(self, query: str, k=10) -> list[NodeWithScore]:
@@ -180,21 +185,31 @@ class CodeIndexer:
     def _insert_nodes(self, nodes):
         self.index.insert_nodes(nodes)
 
-    def _create_index(self) -> VectorStoreIndex:
-        # Create client and a new collection
-        chroma_client = chromadb.EphemeralClient()
-        chroma_collection = chroma_client.create_collection("code-index")
+    def _create_index(self):
+        if not self.db_path:
+            print("Using ephemeral client.")
+            # Use a persistent client for Chroma if a path is provided @rapidmod
+            chroma_client = chromadb.EphemeralClient()
+        else:
+            print(f"Using persistent client with path: {self.db_path}")
+            chroma_client = chromadb.PersistentClient(path=self.db_path)
 
-        # Define embedding function
+        try:
+            # Try to get the existing collection, or create it if it doesn't exist
+            chroma_collection = chroma_client.get_or_create_collection(name="code-index")
+        except Exception as e:
+            print(f"Error accessing or creating the collection: {e}")
+            raise
+
+        # Define the embedding function
         embed_model = LangchainEmbedding(OpenAIEmbeddings())
 
-        # Set up ChromaVectorStore and load in data
+        # Set up ChromaVectorStore with the persistent collection
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         service_context = ServiceContext.from_defaults(embed_model=embed_model)
         index = VectorStoreIndex.from_vector_store(vector_store=vector_store, service_context=service_context)
 
         self.index = index
-        return index
 
 
 class CodeChangeHandler(FileSystemEventHandler):

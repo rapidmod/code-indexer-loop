@@ -89,6 +89,9 @@ We'd like to thank the Sweep AI for publishing their ideas about code chunking. 
 - flit install --deps develop (to install dev dependencies and run the app)
 
 
+llamaindex-cli upgrade-file <file_path>
+# OR
+llamaindex-cli upgrade <folder_path>
 
 pip install tree-sitter tiktoken watchdog nltk tree-sitter-languages
 pip install toml black isort autoflake ruff pytest flit     # dev dependencies optional

@@ -20,7 +20,9 @@ print("Query execution took {:.2f} seconds.".format(time.time() - starttime2))
 
 # Check if the results list is not empty and print the first 500 characters of the first result
 if results:
-    print(results[0:500])
+    # output the results to results.txt
+    with open("results.txt", "w") as f:
+        f.write("\n".join(results))
 else:
     print("No results found.")
 print("Total time taken: {:.2f} seconds.".format(time.time() - start_time_query))

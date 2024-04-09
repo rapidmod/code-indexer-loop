@@ -91,6 +91,7 @@ class CodeSplitter:
     enforce_max_chunk_tokens: bool
     coalesce: int
     token_counter: TokenCounter
+    ignore_errors: bool
 
     def __init__(
         self,
@@ -100,6 +101,7 @@ class CodeSplitter:
         enforce_max_chunk_tokens: bool,
         coalesce: int,
         token_model: str,
+        ignore_errors: bool = False,
     ):
         self.token_counter = TokenCounter(default_model=token_model)
         self.target_chunk_tokens = target_chunk_tokens
@@ -107,6 +109,7 @@ class CodeSplitter:
         self.enforce_max_chunk_tokens = enforce_max_chunk_tokens
         self.language = language
         self.coalesce = coalesce
+        self.ignore_errors = ignore_errors
 
     @classmethod
     def class_name(cls) -> str:
@@ -227,6 +230,7 @@ class CodeSplitter:
 
     def get_line_number(self, index: int, source_code: bytes) -> int:
         total_chars = 0
+        line_number = -1
         for line_number, line in enumerate(self.split_and_keep_newline(source_code), start=1):
             total_chars += len(line)
             if total_chars > index:
@@ -243,6 +247,8 @@ class CodeSplitter:
         try:
             parser = tree_sitter_languages.get_parser(self.language)
         except Exception as e:
+            if self.ignore_errors:
+                return []
             print(
                 f"Could not get parser for language {self.language}. Check "
                 "https://github.com/grantjenks/py-tree-sitter-languages#license "
@@ -256,4 +262,6 @@ class CodeSplitter:
             chunks = [line_span.extract_lines(text) for line_span in line_spans]
             return chunks
         else:
+            if self.ignore_errors:
+                return []
             raise ValueError(f"Could not parse code with language {self.language}.")

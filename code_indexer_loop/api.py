@@ -1,6 +1,8 @@
 import atexit
 import os
 from pathlib import Path
+import chardet
+from pathlib import Path
 
 import chromadb
 from langchain_openai import OpenAIEmbeddings
@@ -37,8 +39,10 @@ class CodeIndexer:
             token_model: str = "gpt-4",
             watch: bool = False,
             refresh: bool = True,
-            db_path: str = ""  # Path to save the Chroma database, none if not persistent @rapidmod
+            db_path: str = "",  # Path to save the Chroma database, none if not persistent @rapidmod
+            ignore_errors: bool = False
     ):
+        self.ignore_errors = ignore_errors
         self.src_dir = src_dir
         self.target_chunk_tokens = target_chunk_tokens
         self.max_chunk_tokens = max_chunk_tokens
@@ -82,7 +86,7 @@ class CodeIndexer:
         return contents
 
     def add_file(self, file: str):
-        ext = os.path.splitext(file)[1]
+        ext = Path(file).suffix
         text_splitter = self._get_code_splitter(ext)
 
         calculated_hash = hash_md5(file)
@@ -93,7 +97,14 @@ class CodeIndexer:
         else:
             self.hash_cache[file] = calculated_hash
 
-        with open(file, "r") as f:
+        # Detect file encoding
+        with open(file, 'rb') as f:
+            raw_data = f.read()
+        detected_encoding = chardet.detect(raw_data)['encoding']
+        print(f"Detected encoding for {file}: {detected_encoding}")
+
+        # Read the file with the detected encoding
+        with open(file, "r", encoding=detected_encoding, errors='ignore') as f:
             text = f.read()
             nodes = [
                 TextNode(
@@ -136,7 +147,7 @@ class CodeIndexer:
             self.observer.stop()
             self.observer.join()
 
-    def _find_files(self, path, include_ext={}):
+    def _find_files(self, path, include_ext= { } ):
         """
         Recursively find all files in a given path.
 
@@ -147,6 +158,9 @@ class CodeIndexer:
 
         Returns:
             list: A list of full file paths for each file found.
+            :param path:
+            :param include_ext:
+            :return:
         """
         found_files = []
 
@@ -173,6 +187,7 @@ class CodeIndexer:
                 enforce_max_chunk_tokens=self.enforce_max_chunk_tokens,
                 coalesce=self.coalesce,
                 token_model=self.token_model,
+                ignore_errors=self.ignore_errors
             )
             self.code_splitters[ext] = text_splitter
 
